@@ -1,0 +1,257 @@
+---
+import Layout from '../layouts/Layout.astro';
+import FeaturedCoursesSlider from '../components/FeaturedCoursesSlider';
+import CourseCard from '../components/CourseCard';
+import AppContent from '../components/AppContent';
+import { db } from '../firebase/config';
+import { ref, get } from 'firebase/database';
+import type { Course } from '../types/course';
+import CartWrapper from '../components/CartWrapper';
+import CurrencySelector from '../components/CurrencySelector';
+
+// Obtener los cursos desde Firebase
+let courses: Course[] = [];
+let error = null;
+
+try {
+	if (!db) {
+		throw new Error('La base de datos no está inicializada correctamente');
+	}
+	
+	const coursesRef = ref(db, 'courses');
+	const snapshot = await get(coursesRef);
+	
+	if (snapshot.exists()) {
+		courses = Object.values(snapshot.val());
+	} else {
+		console.log('No hay cursos disponibles');
+	}
+} catch (err) {
+	console.error('Error al obtener los cursos:', err);
+	error = err instanceof Error ? err.message : 'Error desconocido';
+}
+
+// Obtener categorías únicas
+const categories = Array.from(new Set(courses.map(course => course.category)));
+
+// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
+// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+---
+
+</Layout><Layout title="Plataforma de Cursos Online">
+	<CartWrapper client:only="react">
+		<main class="container mx-auto px-4">
+			
+			<!-- Sección de Bienvenida con Selector de Moneda -->
+			<section class="py-8 flex justify-between items-center">
+				<h1 class="text-3xl font-bold">Bienvenido a la Plataforma de Cursos</h1>
+				<CurrencySelector client:only="react" /> <!-- Se coloca correctamente -->
+			</section>
+
+			<!-- Mostrar error si hay problemas al obtener los cursos -->
+			{error && (
+				<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+					<strong class="font-bold">Error: </strong>
+					<span class="block sm:inline">{error}</span>
+				</div>
+			)}
+
+			<!-- Hero Section -->
+			<section class="py-8">
+				<FeaturedCoursesSlider client:only="react" courses={courses} />
+			</section>
+
+			<!-- Categorías -->
+			<section class="py-8">
+				<h2 class="text-3xl font-bold mb-6">Categorías</h2>
+				<div class="flex gap-4 overflow-x-auto pb-4">
+					<button 
+						class="category-btn px-6 py-2 rounded-full transition-colors duration-200 bg-blue-600 text-white" 
+						data-category="Todos"
+					>
+						Todos
+					</button>
+					{categories.map(category => (
+						<button 
+							class="category-btn px-6 py-2 bg-blue-100 text-blue-700 rounded-full transition-colors duration-200 hover:bg-blue-200" 
+							data-category={category}
+						>
+							{category}
+						</button>
+					))}
+				</div>
+			</section>
+
+			<!-- Buscador -->
+			<section class="py-8">
+				<div class="relative">
+					<input
+						type="text"
+						placeholder="Buscar cursos..."
+						class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					/>
+					<button class="absolute right-3 top-1/2 transform -translate-y-1/2">
+						🔍
+					</button>
+				</div>
+			</section>
+
+			<!-- Listado de Cursos -->
+			<section class="py-8">
+				<h2 class="text-3xl font-bold mb-6">Cursos Disponibles</h2>
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="coursesGrid">
+					{courses.map(course => (
+						<div class="course-card" data-category={course.category}>
+							<CourseCard client:only="react" course={course} />
+						</div>
+					))}
+				</div>
+			</section>
+		</main>
+	</CartWrapper>
+
+
+<script>
+	// Manejar la búsqueda y filtrado de cursos
+	const searchInput = document.querySelector('input[type="text"]');
+	const courseCards = document.querySelectorAll('.course-card');
+	const categoryButtons = document.querySelectorAll('.category-btn');
+	const coursesGrid = document.getElementById('coursesGrid');
+
+	let currentCategory = 'Todos';
+	let searchTerm = '';
+
+	function updateActiveButton(selectedCategory: string) {
+		categoryButtons.forEach(button => {
+			if (button instanceof HTMLElement) {
+				const isSelected = button.dataset.category === selectedCategory;
+				button.classList.toggle('bg-blue-600', isSelected);
+				button.classList.toggle('text-white', isSelected);
+				button.classList.toggle('bg-blue-100', !isSelected);
+				button.classList.toggle('text-blue-700', !isSelected);
+			}
+		});
+	}
+
+	function filterCourses() {
+		let visibleCount = 0;
+
+		// Ocultar todas las tarjetas primero con una transición
+		courseCards.forEach(card => {
+			if (!(card instanceof HTMLElement)) return;
+			card.style.opacity = '0';
+			card.style.transform = 'translateY(10px)';
+		});
+
+		// Esperar un momento para la transición de ocultamiento
+		setTimeout(() => {
+			courseCards.forEach(card => {
+				if (!(card instanceof HTMLElement)) return;
+
+				const category = card.dataset.category || '';
+				const title = card.querySelector('h3')?.textContent?.toLowerCase() || '';
+				
+				// Filtrado más estricto por categoría
+				const matchesCategory = currentCategory === 'Todos' || category === currentCategory;
+				const matchesSearch = searchTerm === '' || title.includes(searchTerm.toLowerCase());
+				
+				const shouldShow = matchesCategory && matchesSearch;
+				
+				// Aplicar display none/block
+				card.style.display = shouldShow ? 'block' : 'none';
+				
+				// Si se debe mostrar, aplicar la animación de entrada
+				if (shouldShow) {
+					visibleCount++;
+					setTimeout(() => {
+						card.style.opacity = '1';
+						card.style.transform = 'translateY(0)';
+					}, 50);
+				}
+			});
+
+			// Actualizar mensaje de no resultados
+			let noResultsMessage = document.getElementById('noResultsMessage');
+			if (visibleCount === 0) {
+				if (!noResultsMessage) {
+					noResultsMessage = document.createElement('div');
+					noResultsMessage.id = 'noResultsMessage';
+					noResultsMessage.className = 'text-center py-8 text-gray-500 animate-fade-in';
+					noResultsMessage.innerHTML = `
+						<p class="text-xl mb-2">No se encontraron cursos en la categoría "${currentCategory}"</p>
+						<p>Selecciona otra categoría o prueba con diferentes términos de búsqueda</p>
+					`;
+					coursesGrid?.parentNode?.insertBefore(noResultsMessage, coursesGrid.nextSibling);
+				}
+			} else if (noResultsMessage) {
+				noResultsMessage.remove();
+			}
+		}, 150);
+	}
+
+	searchInput?.addEventListener('input', (e) => {
+		if (e.target instanceof HTMLInputElement) {
+			searchTerm = e.target.value;
+			filterCourses();
+		}
+	});
+
+	categoryButtons.forEach(button => {
+		button.addEventListener('click', () => {
+			if (button instanceof HTMLElement && button.dataset.category) {
+				currentCategory = button.dataset.category;
+				updateActiveButton(currentCategory);
+				filterCourses();
+			}
+		});
+	});
+
+	// Inicializar el filtrado
+	updateActiveButton(currentCategory);
+	filterCourses();
+</script>
+
+<style>
+	.animate-fade-in {
+		animation: fadeIn 0.3s ease-out forwards;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.category-btn {
+		white-space: nowrap;
+	}
+
+	/* Estilizar la barra de desplazamiento horizontal */
+	.overflow-x-auto {
+		scrollbar-width: thin;
+		scrollbar-color: #93C5FD transparent;
+	}
+
+	.overflow-x-auto::-webkit-scrollbar {
+		height: 6px;
+	}
+
+	.overflow-x-auto::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.overflow-x-auto::-webkit-scrollbar-thumb {
+		background-color: #93C5FD;
+		border-radius: 20px;
+	}
+
+	/* Añadir transiciones suaves para las tarjetas */
+	.course-card {
+		transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+	}
+</style>
