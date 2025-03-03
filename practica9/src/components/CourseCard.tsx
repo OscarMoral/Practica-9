@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Course } from '../types/course';
 import { useCart } from '../context/CartContext';
 import PrecioDinamico from './PrecioDinamico';
@@ -9,6 +9,7 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   const { 
     title, 
@@ -22,71 +23,71 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
     learningObjectives 
   } = course;
 
-  let addItem: ((course: Course) => void) | undefined;
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  let cart;
   try {
-    const cart = useCart();
-    addItem = cart.addItem;
+    cart = isClient ? useCart() : null;
   } catch (error) {
     console.error('Error al acceder al contexto del carrito:', error);
+    cart = null;
   }
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (addItem) {
-      try {
-        setIsAdding(true);
-        addItem(course);
-        setTimeout(() => {
-          setIsAdding(false);
-        }, 500);
-      } catch (error) {
-        console.error('Error al añadir al carrito:', error);
+    if (!cart?.addItem) return;
+
+    try {
+      setIsAdding(true);
+      cart.addItem(course);
+      setTimeout(() => {
         setIsAdding(false);
-      }
-    } else {
-      console.error('La función addItem no está disponible');
+      }, 500);
+    } catch (error) {
+      console.error('Error al añadir al carrito:', error);
+      setIsAdding(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-xl relative group">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
       <div className="relative">
-        <img 
-          src={image} 
-          alt={title} 
-          className="w-full h-48 object-contain bg-gray-50 p-4" 
+        <img
+          src={image}
+          alt={title}
+          className="w-full h-48 object-cover"
         />
-        <span className="absolute top-2 left-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
-          {category}
-        </span>
-      </div>
-      
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-3">
-          <span className={`
-            text-sm font-medium px-2 py-1 rounded-full
-            ${level === 'Principiante' ? 'bg-green-100 text-green-700' : ''}
-            ${level === 'Intermedio' ? 'bg-yellow-100 text-yellow-700' : ''}
-            ${level === 'Avanzado' ? 'bg-red-100 text-red-700' : ''}
-          `}>
+        <div className="absolute top-2 right-2">
+          <span className="bg-white px-2 py-1 rounded-full text-sm font-medium text-gray-700 shadow">
             {level}
           </span>
-          <span className="text-sm text-gray-500">• {duration}</span>
         </div>
+      </div>
 
-        <h3 className="text-xl font-bold mb-2 line-clamp-2 min-h-[3.5rem]">{title}</h3>
-        <p className="text-gray-600 mb-4 line-clamp-2">{description}</p>
+      <div className="p-6">
+        <h3 className="text-xl font-bold mb-2 text-gray-900 line-clamp-2">
+          {title}
+        </h3>
         
-        <div className="space-y-2 mb-4">
-          <h4 className="text-sm font-semibold text-gray-700">Aprenderás:</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
-            {learningObjectives.slice(0, 2).map((objective, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span className="line-clamp-1">{objective}</span>
-              </li>
-            ))}
-          </ul>
+        <p className="text-gray-600 mb-4 line-clamp-2">
+          {description}
+        </p>
+
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-1 text-sm text-gray-500">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {duration}
+          </div>
+          <div className="flex items-center gap-1 text-sm text-gray-500">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            {category}
+          </div>
         </div>
 
         <div className="flex items-center gap-3 mb-4 pb-4 border-b">
@@ -101,17 +102,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           </div>
         </div>
 
-        
-       
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <PrecioDinamico precio={course.price} /> {/* Aquí se muestra el precio convertido */}
-              </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <PrecioDinamico precio={price} showSelector={false} />
             </div>
+          </div>
           
           <div className="flex gap-2">
-            {addItem && (
+            {isClient && cart?.addItem && (
               <button 
                 onClick={handleAddToCart}
                 disabled={isAdding}

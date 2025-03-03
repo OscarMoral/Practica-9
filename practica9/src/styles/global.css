@@ -2,16 +2,19 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* Base Styles */
 body {
   background-color: rgb(249, 250, 251);
   font-family: 'Inter var', system-ui, sans-serif;
 }
 
+/* Typography */
 h1, h2, h3, h4, h5, h6 {
   font-weight: bold;
   letter-spacing: -0.025em;
 }
 
+/* Layout */
 .main-content {
   width: 100%;
   max-width: 1200px;
@@ -19,6 +22,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 16px;
 }
 
+/* Buttons */
 .btn {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -46,12 +50,14 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #f9fafb;
 }
 
+/* Cards */
 .card {
   background-color: white;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Forms */
 .input {
   width: 100%;
   padding: 0.5rem 0.75rem;
@@ -59,6 +65,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 0.375rem;
 }
 
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -74,6 +81,7 @@ h1, h2, h3, h4, h5, h6 {
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -90,4 +98,26 @@ h1, h2, h3, h4, h5, h6 {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: #6b7280;
+}
+
+/* Grid Layout */
+.courses-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+/* Category Pills */
+.category-pill {
+  @apply px-4 py-2 rounded-full;
+  @apply text-sm font-medium;
+  @apply transition-all duration-200;
+  @apply hover:shadow-md hover:-translate-y-0.5;
+}
+
+/* Course Card Hover Effects */
+.course-card {
+  @apply transform transition-all duration-300;
+}
+
+.course-card:hover {
+  @apply -translate-y-1 shadow-lg;
 }

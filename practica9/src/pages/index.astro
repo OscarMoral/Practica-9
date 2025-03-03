@@ -7,6 +7,7 @@ import { db } from '../firebase/config';
 import { ref, get } from 'firebase/database';
 import type { Course } from '../types/course';
 import CartWrapper from '../components/CartWrapper';
+import PrecioDinamico from '../components/PrecioDinamico';
 import CurrencySelector from '../components/CurrencySelector';
 
 // Obtener los cursos desde Firebase
@@ -38,42 +39,60 @@ const categories = Array.from(new Set(courses.map(course => course.category)));
 // Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
-</Layout><Layout title="Plataforma de Cursos Online">
-	<CartWrapper client:only="react">
-		<main class="container mx-auto px-4">
-			
+<Layout title="Plataforma de Cursos Online">
+	<CartWrapper client:load>
+		<main class="container mx-auto px-4 max-w-7xl">
 			<!-- Sección de Bienvenida con Selector de Moneda -->
-			<section class="py-8 flex justify-between items-center">
-				<h1 class="text-3xl font-bold">Bienvenido a la Plataforma de Cursos</h1>
-				<CurrencySelector client:only="react" /> <!-- Se coloca correctamente -->
+			<section class="py-12 mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-sm">
+				<div class="max-w-6xl mx-auto px-6">
+					<div class="flex justify-between items-center">
+						<div class="text-left">
+							<h1 class="text-5xl font-bold text-gray-900 mb-4">
+								Bienvenido a tu <span class="text-blue-600">Plataforma de Aprendizaje</span>
+							</h1>
+							<p class="text-lg text-gray-600 max-w-2xl">
+								Descubre una amplia variedad de cursos diseñados para impulsar tu carrera profesional
+							</p>
+						</div>
+						<CurrencySelector client:load />
+					</div>
+				</div>
 			</section>
 
 			<!-- Mostrar error si hay problemas al obtener los cursos -->
 			{error && (
-				<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-					<strong class="font-bold">Error: </strong>
-					<span class="block sm:inline">{error}</span>
+				<div class="bg-red-50 border-l-4 border-red-400 p-4 mb-8 rounded-lg" role="alert">
+					<div class="flex">
+						<div class="flex-shrink-0">
+							<svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+								<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+							</svg>
+						</div>
+						<div class="ml-3">
+							<p class="text-sm text-red-700">{error}</p>
+						</div>
+					</div>
 				</div>
 			)}
 
 			<!-- Hero Section -->
-			<section class="py-8">
+			<section class="py-8 mb-12">
 				<FeaturedCoursesSlider client:only="react" courses={courses} />
 			</section>
 
 			<!-- Categorías -->
-			<section class="py-8">
-				<h2 class="text-3xl font-bold mb-6">Categorías</h2>
-				<div class="flex gap-4 overflow-x-auto pb-4">
+			<section class="py-8 mb-12">
+				<h2 class="text-3xl font-bold mb-6 text-gray-900">Explora por Categorías</h2>
+				<div class="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
 					<button 
-						class="category-btn px-6 py-2 rounded-full transition-colors duration-200 bg-blue-600 text-white" 
+						class="category-btn px-6 py-3 rounded-full transition-all duration-300 bg-blue-600 text-white hover:shadow-lg transform hover:-translate-y-0.5" 
 						data-category="Todos"
 					>
-						Todos
+						Todos los Cursos
 					</button>
 					{categories.map(category => (
 						<button 
-							class="category-btn px-6 py-2 bg-blue-100 text-blue-700 rounded-full transition-colors duration-200 hover:bg-blue-200" 
+							class="category-btn px-6 py-3 bg-white border-2 border-blue-200 text-blue-700 rounded-full transition-all duration-300 hover:bg-blue-50 hover:border-blue-300 hover:shadow-lg transform hover:-translate-y-0.5" 
 							data-category={category}
 						>
 							{category}
@@ -83,33 +102,83 @@ const categories = Array.from(new Set(courses.map(course => course.category)));
 			</section>
 
 			<!-- Buscador -->
-			<section class="py-8">
-				<div class="relative">
+			<section class="py-8 mb-12">
+				<div class="relative max-w-2xl mx-auto">
 					<input
 						type="text"
 						placeholder="Buscar cursos..."
-						class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						class="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 pl-14"
 					/>
-					<button class="absolute right-3 top-1/2 transform -translate-y-1/2">
-						🔍
-					</button>
+					<svg class="absolute left-5 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+					</svg>
 				</div>
 			</section>
 
 			<!-- Listado de Cursos -->
 			<section class="py-8">
-				<h2 class="text-3xl font-bold mb-6">Cursos Disponibles</h2>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="coursesGrid">
+				<h2 class="text-3xl font-bold mb-8 text-gray-900">Cursos Disponibles</h2>
+				<div class="grid grid-cols-3 gap-8" id="coursesGrid">
 					{courses.map(course => (
-						<div class="course-card" data-category={course.category}>
-							<CourseCard client:only="react" course={course} />
+						<div class="course-card transform transition-all duration-300" data-category={course.category}>
+							<CourseCard client:load course={course} />
 						</div>
 					))}
 				</div>
 			</section>
 		</main>
 	</CartWrapper>
+</Layout>
 
+<style>
+	.animate-fade-in {
+		animation: fadeIn 0.3s ease-out forwards;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.category-btn {
+		white-space: nowrap;
+	}
+
+	/* Estilizar la barra de desplazamiento horizontal */
+	.overflow-x-auto {
+		scrollbar-width: thin;
+		scrollbar-color: #93C5FD transparent;
+	}
+
+	.overflow-x-auto::-webkit-scrollbar {
+		height: 6px;
+	}
+
+	.overflow-x-auto::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.overflow-x-auto::-webkit-scrollbar-thumb {
+		background-color: #93C5FD;
+		border-radius: 3px;
+	}
+
+	.course-card {
+		opacity: 1;
+		transform: translateY(0);
+		transition: all 0.3s ease-in-out;
+	}
+
+	.course-card:hover {
+		transform: translateY(-4px);
+	}
+</style>
 
 <script>
 	// Manejar la búsqueda y filtrado de cursos
@@ -210,48 +279,3 @@ const categories = Array.from(new Set(courses.map(course => course.category)));
 	updateActiveButton(currentCategory);
 	filterCourses();
 </script>
-
-<style>
-	.animate-fade-in {
-		animation: fadeIn 0.3s ease-out forwards;
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-			transform: translateY(10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	.category-btn {
-		white-space: nowrap;
-	}
-
-	/* Estilizar la barra de desplazamiento horizontal */
-	.overflow-x-auto {
-		scrollbar-width: thin;
-		scrollbar-color: #93C5FD transparent;
-	}
-
-	.overflow-x-auto::-webkit-scrollbar {
-		height: 6px;
-	}
-
-	.overflow-x-auto::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	.overflow-x-auto::-webkit-scrollbar-thumb {
-		background-color: #93C5FD;
-		border-radius: 20px;
-	}
-
-	/* Añadir transiciones suaves para las tarjetas */
-	.course-card {
-		transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-	}
-</style>
